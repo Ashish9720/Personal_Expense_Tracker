@@ -44,28 +44,17 @@ A comprehensive web-based expense tracking application built with Flask and SQLi
    cd PersonalExpenseTracker
    ```
 
-2. **Create Virtual Environment (Recommended)**
-   ```bash
-   python -m venv venv
-   
-   # On Windows
-   venv\Scripts\activate
-   
-   # On macOS/Linux
-   source venv/bin/activate
-   ```
-
-3. **Install Dependencies**
+2. **Install Dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Run the Application**
+3. **Run the Application**
    ```bash
    python app.py
    ```
 
-5. **Access the Application**
+4. **Access the Application**
    Open your web browser and navigate to: `http://localhost:5000`
 
 ## 📖 How to Use
