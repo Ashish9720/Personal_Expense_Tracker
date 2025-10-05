@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Reports - Personal Expense Tracker{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-6 mb-3"><i class="fas fa-chart-bar me-2"></i>Expense Reports</h1>
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-3x mb-3"></i>
+                <h2 class="display-4">${{ "%.2f"|format(total_spent) }}</h2>
+                <p class="lead mb-0">Total Amount Spent</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Expenses by Category</h5>
+            </div>
+            <div class="card-body">
+                {% if category_summary %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr><th>Category</th><th>Amount</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for category, amount in category_summary %}
+                            <tr>
+                                <td>{{ category }}</td>
+                                <td><strong>${{ "%.2f"|format(amount) }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <p>No category data available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Monthly Summary</h5>
+            </div>
+            <div class="card-body">
+                {% if monthly_summary %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr><th>Month</th><th>Amount</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for year, month, amount in monthly_summary %}
+                            <tr>
+                                <td>{{ month }}/{{ year }}</td>
+                                <td><strong>${{ "%.2f"|format(amount) }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <p>No monthly data available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Personal Expense Tracker{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-6 mb-3"><i class="fas fa-chart-line text-primary me-2"></i>Dashboard</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-3x mb-3"></i>
+                <h4>${{ "%.2f"|format(total_spent) }}</h4>
+                <p class="mb-0">
+                    {% if date_toggle_on and date_range_mode_on and selected_date_from and selected_date_to %}
+                        Total Spent ({{ selected_date_from }} to {{ selected_date_to }})
+                    {% elif date_toggle_on and selected_date %}
+                        Total Spent ({{ selected_date }})
+                    {% elif selected_categories %}
+                        Total Spent ({{ selected_categories|length }} Categories)
+                    {% elif selected_category %}
+                        Total Spent ({{ categories|selectattr("id", "equalto", selected_category)|map(attribute="name")|first }})
+                    {% else %}
+                        Total Spent
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-alt fa-3x mb-3"></i>
+                <h4>${{ "%.2f"|format(month_spent) }}</h4>
+                <p class="mb-0">
+                    {% if date_toggle_on and date_range_mode_on and selected_date_from and selected_date_to %}
+                        Date Range
+                    {% elif date_toggle_on and selected_date %}
+                        Selected Date
+                    {% elif selected_categories %}
+                        This Month ({{ selected_categories|length }} Categories)
+                    {% elif selected_category %}
+                        This Month ({{ categories|selectattr("id", "equalto", selected_category)|map(attribute="name")|first }})
+                    {% else %}
+                        This Month
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-receipt fa-3x mb-3"></i>
+                <h4>{{ total_expenses }}</h4>
+                <p class="mb-0">
+                    {% if date_toggle_on and date_range_mode_on and selected_date_from and selected_date_to %}
+                        Expenses ({{ selected_date_from }} to {{ selected_date_to }})
+                    {% elif date_toggle_on and selected_date %}
+                        Expenses ({{ selected_date }})
+                    {% elif selected_categories %}
+                        Expenses ({{ selected_categories|length }} Categories)
+                    {% elif selected_category %}
+                        Expenses ({{ categories|selectattr("id", "equalto", selected_category)|map(attribute="name")|first }})
+                    {% else %}
+                        Total Expenses
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0"><i class="fas fa-list me-2"></i>Recent Expenses</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <form method="GET" action="{{ url_for('index') }}" id="filterForm">
+                            <div class="row g-2 align-items-center">
+                                <!-- Date Toggle -->
+                                <div class="col-auto">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="date_toggle" name="date_toggle" 
+                                               {% if date_toggle_on %}checked{% endif %} 
+                                               onchange="toggleDateFilters(); this.form.submit();">
+                                        <label class="form-check-label" for="date_toggle">
+                                            <small>Date Filter</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Date Range Mode Toggle -->
+                                <div class="col-auto" id="dateRangeToggle" style="display: {% if date_toggle_on %}block{% else %}none{% endif %};">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="date_range_mode" name="date_range_mode" 
+                                               {% if date_range_mode_on %}checked{% endif %} 
+                                               onchange="toggleDateInputs(); this.form.submit();">
+                                        <label class="form-check-label" for="date_range_mode">
+                                            <small>Date Range</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Single Date Input -->
+                                <div class="col-auto" id="singleDateInput" style="display: {% if date_toggle_on and not date_range_mode_on %}block{% else %}none{% endif %};">
+                                    <input type="date" name="date" class="form-control form-control-sm" 
+                                           value="{{ selected_date if selected_date }}" 
+                                           placeholder="Select Date" 
+                                           onchange="this.form.submit();"
+                                           style="width: 140px;">
+                                </div>
+                                
+                                <!-- Date Range Inputs -->
+                                <div class="col-auto" id="dateRangeInputs" style="display: {% if date_toggle_on and date_range_mode_on %}block{% else %}none{% endif %};">
+                                    <div class="input-group input-group-sm">
+                                        <input type="date" name="date_from" class="form-control" 
+                                               value="{{ selected_date_from if selected_date_from }}" 
+                                               placeholder="From" 
+                                               onchange="this.form.submit();"
+                                               style="width: 110px;">
+                                        <span class="input-group-text">to</span>
+                                        <input type="date" name="date_to" class="form-control" 
+                                               value="{{ selected_date_to if selected_date_to }}" 
+                                               placeholder="To" 
+                                               onchange="this.form.submit();"
+                                               style="width: 110px;">
+                                    </div>
+                                </div>
+                                
+                                <!-- Category Filter Toggle -->
+                                <div class="col-auto">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="category_toggle" name="category_toggle" 
+                                               {% if category_toggle_on %}checked{% endif %} 
+                                               onchange="toggleCategoryFilters();">
+                                        <label class="form-check-label" for="category_toggle">
+                                            <small>Category Filter</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Multi-Select Category Mode -->
+                                <div class="col-auto" id="categoryMultiSelect" style="display: {% if category_toggle_on %}block{% else %}none{% endif %};">
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" 
+                                                data-bs-toggle="dropdown" aria-expanded="false" style="width: 140px;">
+                                            {% if selected_categories %}
+                                                {{ selected_categories|length }} Selected
+                                            {% elif selected_category %}
+                                                {{ categories|selectattr("id", "equalto", selected_category)|map(attribute="name")|first }}
+                                            {% else %}
+                                                Select Categories
+                                            {% endif %}
+                                        </button>
+                                        <div class="dropdown-menu p-2" style="min-width: 200px;" data-bs-auto-close="outside">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="all_categories" 
+                                                       {% if not selected_categories and not selected_category %}checked{% endif %}
+                                                       onchange="toggleAllCategories(); submitFormSilently();">
+                                                <label class="form-check-label fw-bold" for="all_categories">
+                                                    All Categories
+                                                </label>
+                                            </div>
+                                            <hr class="my-2">
+                                            {% for category in categories %}
+                                            <div class="form-check">
+                                                <input class="form-check-input category-checkbox" type="checkbox" 
+                                                       id="category_{{ category.id }}" name="categories" value="{{ category.id }}"
+                                                       {% if category.id in selected_categories %}checked{% endif %}
+                                                       onchange="updateCategorySelection(); submitFormSilently();">
+                                                <label class="form-check-label" for="category_{{ category.id }}">
+                                                    {{ category.name }}
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Legacy Single Category Select (hidden) -->
+                                <select name="category" class="form-select form-select-sm" style="display: none;">
+                                    <option value="">All Categories</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="recentExpensesTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                                        <tbody>
+                            {% for expense in recent_expenses %}
+                            <tr>
+                                <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {{ expense.description }}
+                                    {% if expense.is_monthly %}
+                                    <span class="badge bg-success ms-1"><i class="fas fa-calendar-alt me-1"></i>Monthly</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge bg-secondary">{{ expense.category.name }}</span></td>
+                                <td><strong class="text-primary">${{ "%.2f"|format(expense.amount) }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-receipt fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No expenses yet. Add your first expense!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Quick Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total Spent:</span>
+                    <strong>${{ "%.2f"|format(total_spent) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>This Month:</span>
+                    <strong>${{ "%.2f"|format(month_spent) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total Expenses:</span>
+                    <strong>{{ total_expenses }}</strong>
+                </div>
+                {% if total_spent > 0 %}
+                <div class="d-flex justify-content-between">
+                    <span>Average:</span>
+                    <strong>${{ "%.2f"|format(total_spent / total_expenses) }}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- PDF Download Button -->
+        <div class="card mt-3">
+            <div class="card-body text-center">
+                <h6 class="card-title mb-3">
+                    <i class="fas fa-download me-2"></i>Download Dashboard Report
+                </h6>
+                <p class="card-text small text-muted mb-3">
+                    Export current dashboard view as PDF report
+                </p>
+                <a href="{{ url_for('download_dashboard_pdf') }}?{{ request.query_string.decode() }}" 
+                   class="btn btn-outline-primary btn-sm" target="_blank">
+                    <i class="fas fa-file-pdf me-2"></i>Download PDF
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('add_expense') }}" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-plus me-2"></i>Add Expense
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('expenses') }}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-list me-2"></i>View Expenses
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('reports') }}" class="btn btn-outline-secondary w-100 mb-2">
+                            <i class="fas fa-chart-bar me-2"></i>View Reports
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('categories') }}" class="btn btn-outline-info w-100 mb-2">
+                            <i class="fas fa-tags me-2"></i>Categories
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+function toggleDateFilters() {
+    const dateToggle = document.getElementById('date_toggle');
+    const dateRangeToggle = document.getElementById('dateRangeToggle');
+    const singleDateInput = document.getElementById('singleDateInput');
+    const dateRangeInputs = document.getElementById('dateRangeInputs');
+    
+    if (dateToggle.checked) {
+        dateRangeToggle.style.display = 'block';
+        // Show single date input by default
+        singleDateInput.style.display = 'block';
+        dateRangeInputs.style.display = 'none';
+    } else {
+        dateRangeToggle.style.display = 'none';
+        singleDateInput.style.display = 'none';
+        dateRangeInputs.style.display = 'none';
+    }
+}
+
+function toggleDateInputs() {
+    const dateRangeMode = document.getElementById('date_range_mode');
+    const singleDateInput = document.getElementById('singleDateInput');
+    const dateRangeInputs = document.getElementById('dateRangeInputs');
+    
+    if (dateRangeMode.checked) {
+        singleDateInput.style.display = 'none';
+        dateRangeInputs.style.display = 'block';
+    } else {
+        singleDateInput.style.display = 'block';
+        dateRangeInputs.style.display = 'none';
+    }
+}
+
+function toggleCategoryFilters() {
+    const categoryToggle = document.getElementById('category_toggle');
+    const categoryMultiSelect = document.getElementById('categoryMultiSelect');
+    
+    if (categoryToggle.checked) {
+        categoryMultiSelect.style.display = 'block';
+    } else {
+        categoryMultiSelect.style.display = 'none';
+        // Clear all category selections
+        document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        document.getElementById('all_categories').checked = true;
+        
+        // Clear hidden single category select
+        const hiddenSelect = document.querySelector('select[name="category"]');
+        if (hiddenSelect) {
+            hiddenSelect.value = '';
+        }
+        
+        // Submit form immediately when turning OFF to clear filters
+        document.getElementById('filterForm').submit();
+    }
+    // When turning ON, don't submit automatically - let user select categories first
+}
+
+function toggleAllCategories() {
+    const allCategoriesCheckbox = document.getElementById('all_categories');
+    const categoryCheckboxes = document.querySelectorAll('.category-checkbox');
+    
+    if (allCategoriesCheckbox.checked) {
+        // Uncheck all individual categories
+        categoryCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    } else {
+        // Check all individual categories
+        categoryCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+    updateCategorySelection();
+}
+
+
+function updateCategorySelection() {
+    const allCategoriesCheckbox = document.getElementById('all_categories');
+    const categoryCheckboxes = document.querySelectorAll('.category-checkbox');
+    const checkedBoxes = document.querySelectorAll('.category-checkbox:checked');
+    
+    // Update "All Categories" checkbox based on individual selections
+    if (checkedBoxes.length === 0) {
+        allCategoriesCheckbox.checked = true;
+    } else if (checkedBoxes.length === categoryCheckboxes.length) {
+        allCategoriesCheckbox.checked = false;
+    } else {
+        allCategoriesCheckbox.checked = false;
+    }
+    
+    // Update dropdown button text
+    const dropdownButton = document.querySelector('[data-bs-toggle="dropdown"]');
+    if (checkedBoxes.length === 0) {
+        dropdownButton.textContent = 'All Categories';
+    } else if (checkedBoxes.length === 1) {
+        dropdownButton.textContent = checkedBoxes[0].nextElementSibling.textContent;
+    } else {
+        dropdownButton.textContent = checkedBoxes.length + ' Selected';
+    }
+}
+
+function submitFormSilently() {
+    // Submit form without closing dropdown
+    const form = document.getElementById('filterForm');
+    const formData = new FormData(form);
+    
+    // Create a fetch request to submit the form
+    fetch(window.location.pathname + '?' + new URLSearchParams(formData), {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }).then(response => {
+        if (response.ok) {
+            // Update the page content without full reload
+            return response.text();
+        }
+    }).then(html => {
+        // Update only the dashboard content
+        const parser = new DOMParser();
+        const newDoc = parser.parseFromString(html, 'text/html');
+        
+        // Update dashboard cards
+        const newCards = newDoc.querySelectorAll('.stat-card');
+        const currentCards = document.querySelectorAll('.stat-card');
+        newCards.forEach((newCard, index) => {
+            if (currentCards[index]) {
+                currentCards[index].innerHTML = newCard.innerHTML;
+            }
+        });
+        
+        // Update recent expenses table
+        const newTable = newDoc.querySelector('#recentExpensesTable');
+        const currentTable = document.querySelector('#recentExpensesTable');
+        if (newTable && currentTable) {
+            currentTable.innerHTML = newTable.innerHTML;
+        }
+        
+        // Update URL without page reload
+        const newUrl = window.location.pathname + '?' + new URLSearchParams(formData);
+        window.history.pushState({}, '', newUrl);
+    }).catch(error => {
+        console.error('Error updating filters:', error);
+        // Fallback to full page reload
+        form.submit();
+    });
+}
+</script>
+{% endblock %}
+{% endblock %}
